@@ -4,23 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Book Shop</title>
 </head>
 
 <body>
-    <h2>shop data</h2>
-
+    <h2>Book Shop Sales Data</h2>
     <?php
     require_once('db_config.php');
     $conn = new mysqli($servername, $username, $password, $dbname);
+    $jsonData = file_get_contents('data.json');
+    $data = json_decode($jsonData, true);
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
     }
-
-
-    $jsonData = file_get_contents('data.json');
-    $data = json_decode($jsonData, true);
 
     foreach ($data as $key => $value) {
         $sale_id = $value['sale_id'];
@@ -30,7 +27,6 @@
         $product_name = $value['product_name'];
         $product_price = $value['product_price'];
         $sale_date = $value['sale_date'];
-
 
         $customerQuery = "SELECT id FROM customers WHERE name = '$customer_name'";
         $customerResult = $conn->query($customerQuery);
@@ -66,21 +62,6 @@
         $saleStmt->execute();
         $saleStmt->close();
     }
-
-    $productDisplayQuery = "SELECT * FROM products";
-    $productDisplayResult = $conn->query($productDisplayQuery);
-
-    if ($productDisplayResult->num_rows > 0) {
-        echo "<h3>Products:</h3>";
-        echo "<ul>";
-        while ($row = $productDisplayResult->fetch_assoc()) {
-            echo "<li>" . $row['name'] . " - $" . $row['price'] . "</li>";
-        }
-        echo "</ul>";
-    } else {
-        echo "No products found.";
-    }
-
     $conn->close();
     ?>
 
@@ -123,14 +104,13 @@
     if ($max_price !== null) {
         $query .= " AND products.price <= $max_price";
     }
-
+    
     $result = $conn->query($query);
 
     if ($result->num_rows > 0) {
         echo "<h3>Filtered Results:</h3>";
         echo "<table border='1'>";
         echo "<tr><th>Sale ID</th><th>Customer Name</th><th>Product Name</th><th>Product Price</th></tr>";
-
         $total_price = 0;
 
         while ($row = $result->fetch_assoc()) {
@@ -142,15 +122,12 @@
             echo "</tr>";
             $total_price += $row['price'];
         }
-
         echo "<tr><td colspan='3'>Total Price:</td><td>$total_price</td></tr>";
         echo "</table>";
     } else {
         echo "Nothing";
     }
-
     $conn->close();
     ?>
 </body>
-
 </html>
