@@ -13,36 +13,9 @@
     <?php
     require_once('db_config.php');
     $conn = new mysqli($servername, $username, $password, $dbname);
-    $sql = "
-CREATE TABLE IF NOT EXISTS customers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS sales (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL,
-    sale_date DATE NOT NULL,
-    FOREIGN KEY (customer_id) REFERENCES customers(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
-);";
 
     if ($conn->connect_error) {
         die("Connection failed: " . $conn->connect_error);
-    }
-
-    if ($conn->multi_query($sql) === TRUE) {
-        echo "Tables created successfully";
-    } else {
-        echo "Error creating tables: " . $conn->error;
     }
 
 
@@ -57,9 +30,42 @@ CREATE TABLE IF NOT EXISTS sales (
         $product_name = $value['product_name'];
         $product_price = $value['product_price'];
         $sale_date = $value['sale_date'];
+
+
+        $customerQuery = "SELECT id FROM customers WHERE name = '$customer_name'";
+        $customerResult = $conn->query($customerQuery);
+        if ($customerResult->num_rows == 0) {
+            $conn->query("INSERT INTO customers (name) VALUES ('$customer_name')");
+            $customerId = $conn->insert_id;
+        } else {
+            $customerRow = $customerResult->fetch_assoc();
+            $customerId = $customerRow['id'];
+        }
+
+        $productQuery = "SELECT id FROM products WHERE name = ?";
+        $productStmt = $conn->prepare($productQuery);
+        $productStmt->bind_param("s", $product_name);
+        $productStmt->execute();
+        $productResult = $productStmt->get_result();
+
+        if ($productResult->num_rows == 0) {
+            $productInsertQuery = "INSERT INTO products (name, price) VALUES (?, ?)";
+            $productInsertStmt = $conn->prepare($productInsertQuery);
+            $productInsertStmt->bind_param("sd", $product_name, $product_price);
+            $productInsertStmt->execute();
+            $productId = $conn->insert_id;
+            $productInsertStmt->close();
+        } else {
+            $productRow = $productResult->fetch_assoc();
+            $productId = $productRow['id'];
+        }
+
+        $saleQuery = "INSERT INTO sales (customer_id, product_id, sale_date) VALUES (?, ?, ?)";
+        $saleStmt = $conn->prepare($saleQuery);
+        $saleStmt->bind_param("iis", $customerId, $productId, $sale_date);
+        $saleStmt->execute();
+        $saleStmt->close();
     }
-
-
 
     $conn->close();
     ?>

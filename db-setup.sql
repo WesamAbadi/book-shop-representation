@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS sales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
     product_id INT NOT NULL,
-    quantity INT NOT NULL,
     sale_date DATE NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES customers(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
