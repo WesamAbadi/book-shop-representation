@@ -60,9 +60,9 @@
             $productId = $productRow['id'];
         }
 
-        $saleQuery = "INSERT INTO sales (customer_id, product_id, sale_date) VALUES (?, ?, ?)";
+        $saleQuery = "INSERT INTO sales (id, customer_id, product_id, sale_date) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE id = id";
         $saleStmt = $conn->prepare($saleQuery);
-        $saleStmt->bind_param("iis", $customerId, $productId, $sale_date);
+        $saleStmt->bind_param("iisi", $sale_id, $customerId, $productId, $sale_date);
         $saleStmt->execute();
         $saleStmt->close();
     }
